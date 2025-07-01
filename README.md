@@ -85,4 +85,4 @@ Copy
    - **Add a Table of Contents (optional)**: If your README gets long, consider adding a Table of Contents (using Markdown links to sections).
    - **Add Contribution Guidelines**: If you want others to contribute, provide guidelines on how to submit issues, create pull requests, etc.
 
-By combining all of these elements, your GitHub README will look clean, professional, and visually appea
+By combining all of these elements, your GitHub README will look clean, professional, and visually appealing.
