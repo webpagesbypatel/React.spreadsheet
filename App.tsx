@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import type { User, ColumnDef } from './types';
-import { ChevronDownIcon } from './components/icons';
+
 
 
 // Mock data for the spreadsheet
