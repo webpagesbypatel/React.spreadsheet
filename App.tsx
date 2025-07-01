@@ -1,7 +1,32 @@
 import React, { useState, useMemo } from 'react';
 import SpreadsheetTable from './components/SpreadsheetTable';
-import type { User, ColumnDef } from './types';
-import { ChevronDownIcon } from './components/icons';
+
+// Inlined type definitions to simplify dependencies
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+  role: 'Admin' | 'Editor' | 'Viewer';
+  status: 'Active' | 'Inactive' | 'Pending';
+  joinedDate: string;
+}
+
+export interface ColumnDef<T> {
+  accessorKey: keyof T;
+  header: string;
+  minWidth?: number;
+  editable?: boolean;
+  cell?: (value: T[keyof T]) => React.ReactNode;
+}
+
+// Inlined SVG icon component to simplify dependencies
+const ChevronDownIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" {...props}>
+      <path fillRule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" />
+    </svg>
+);
+
+
 // Mock data for the spreadsheet
 const initialUsers: User[] = [
     { id: 1, name: 'John Doe', email: 'john.doe@example.com', role: 'Admin', status: 'Active', joinedDate: '2023-01-15T10:00:00Z' },
