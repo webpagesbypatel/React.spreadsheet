@@ -1,0 +1,5 @@
+{
+  "name": "React Spreadsheet UI",
+  "description": "An interactive spreadsheet-like interface built with React and Tailwind CSS. It supports features like sorting, column resizing, row highlighting, and a sticky header for a seamless user experience.",
+  "requestFramePermissions": []
+}
