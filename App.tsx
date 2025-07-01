@@ -1,5 +1,6 @@
-import React, { useState, useMemo } from 'react';
-import SpreadsheetTable from './components/SpreadsheetTable';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+
+// --- INLINED TYPES & COMPONENTS ---
 
 // Inlined type definitions to simplify dependencies
 export interface User {
@@ -19,15 +20,116 @@ export interface ColumnDef<T> {
   cell?: (value: T[keyof T]) => React.ReactNode;
 }
 
-// Inlined SVG icon component to simplify dependencies
+// Inlined SVG icon component
 const ChevronDownIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" {...props}>
       <path fillRule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" />
     </svg>
 );
 
+// --- SPREADSHEETTABLE COMPONENT IMPLEMENTATION ---
 
-// Mock data for the spreadsheet
+interface SpreadsheetTableProps<T extends { id: number | string }> {
+  columns: ColumnDef<T>[];
+  data: T[];
+  onUpdateData: (rowId: number | string, columnId: keyof T, value: any) => void;
+}
+
+const SpreadsheetTable = <T extends { id: number | string }>({ columns, data, onUpdateData }: SpreadsheetTableProps<T>) => {
+  const [editingCell, setEditingCell] = useState<{ rowId: number | string; columnKey: keyof T } | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    // Focus the input when a cell enters editing mode
+    if (editingCell && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [editingCell]);
+
+  const handleCellClick = (rowId: number | string, column: ColumnDef<T>) => {
+    if (column.editable) {
+      setEditingCell({ rowId, columnKey: column.accessorKey });
+    }
+  };
+
+  const handleBlur = () => {
+    setEditingCell(null);
+  };
+  
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>, row: T, column: ColumnDef<T>) => {
+      if(event.key === 'Enter'){
+          onUpdateData(row.id, column.accessorKey, event.currentTarget.value);
+          setEditingCell(null);
+      } else if (event.key === 'Escape') {
+          setEditingCell(null);
+      }
+  }
+
+  const renderCellContent = (row: T, column: ColumnDef<T>) => {
+      const isEditing = editingCell?.rowId === row.id && editingCell?.columnKey === column.accessorKey;
+      const cellValue = row[column.accessorKey];
+
+      if (isEditing) {
+        return (
+          <input
+            ref={inputRef}
+            type="text"
+            defaultValue={cellValue as string}
+            onBlur={handleBlur}
+            onKeyDown={(e) => handleKeyDown(e, row, column)}
+            className="w-full h-full p-2.5 box-border bg-blue-50 border-2 border-blue-400 focus:outline-none rounded"
+          />
+        );
+      }
+
+      if (column.cell) {
+          return column.cell(cellValue);
+      }
+      return String(cellValue);
+  };
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="min-w-full divide-y divide-gray-200 border-collapse">
+        <thead className="bg-gray-50/75">
+          <tr>
+            {columns.map(col => (
+              <th
+                key={col.accessorKey as string}
+                scope="col"
+                className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 sticky top-0 bg-gray-50/75 backdrop-blur-sm z-10"
+                style={{ minWidth: col.minWidth }}
+              >
+                {col.header}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-200 bg-white">
+          {data.map((row) => (
+            <tr key={row.id}>
+              {columns.map(col => (
+                <td
+                  key={col.accessorKey as string}
+                  className={`whitespace-nowrap ${col.editable ? 'cursor-cell' : ''} p-0`}
+                  onClick={() => handleCellClick(row.id, col)}
+                >
+                 <div className="px-3 py-2.5 text-sm text-gray-700 h-full w-full">
+                    {renderCellContent(row, col)}
+                  </div>
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
+
+// --- MOCK DATA & COLUMN DEFINITIONS ---
+
 const initialUsers: User[] = [
     { id: 1, name: 'John Doe', email: 'john.doe@example.com', role: 'Admin', status: 'Active', joinedDate: '2023-01-15T10:00:00Z' },
     { id: 2, name: 'Jane Smith', email: 'jane.smith@example.com', role: 'Editor', status: 'Active', joinedDate: '2023-02-20T11:30:00Z' },
@@ -43,7 +145,6 @@ const initialUsers: User[] = [
     { id: 12, name: 'Jennifer Taylor', email: 'jennifer.taylor@example.com', role: 'Editor', status: 'Active', joinedDate: '2022-12-10T11:00:00Z' },
 ];
 
-// Master column definitions for the user table
 const ALL_COLUMNS: ColumnDef<User>[] = [
   { accessorKey: 'id', header: 'ID', minWidth: 80, editable: false },
   { accessorKey: 'name', header: 'Name', minWidth: 200, editable: true },
@@ -74,20 +175,17 @@ const ALL_COLUMNS: ColumnDef<User>[] = [
   },
 ];
 
-const App: React.FC = () => {
-    // State for table data
-    const [users, setUsers] = useState<User[]>(initialUsers);
 
-    // State for column visibility
+// --- MAIN APP COMPONENT ---
+
+const App: React.FC = () => {
+    const [users, setUsers] = useState<User[]>(initialUsers);
     const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>(() =>
       Object.fromEntries(ALL_COLUMNS.map(col => [col.accessorKey as string, true]))
     );
-  
-    // State for dropdown visibility
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
     const handleUpdateData = (userId: number | string, columnId: keyof User, value: any) => {
-        // A simple validation for role
         if (columnId === 'role' && !['Admin', 'Editor', 'Viewer'].includes(value)) {
           alert('Invalid role. Please use "Admin", "Editor", or "Viewer".');
           return;
@@ -104,11 +202,9 @@ const App: React.FC = () => {
       setVisibleColumns(prev => ({ ...prev, [accessorKey]: !prev[accessorKey] }));
     };
     
-    // Filter columns based on visibility state
     const columns = useMemo(() => {
       return ALL_COLUMNS.filter(col => visibleColumns[col.accessorKey as string]);
     }, [visibleColumns]);
-
 
   return (
     <div className="bg-gray-50 min-h-screen text-gray-900 font-sans">
@@ -149,7 +245,6 @@ const App: React.FC = () => {
             )}
           </div>
         </div>
-
 
         <main className="bg-white rounded-xl shadow-md ring-1 ring-black ring-opacity-5">
           <SpreadsheetTable columns={columns} data={users} onUpdateData={handleUpdateData} />
