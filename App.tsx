@@ -1,5 +1,4 @@
 import React, { useState, useMemo } from 'react';
-import SpreadsheetTable from './components/SpreadsheetTable';
 import type { User, ColumnDef } from './types';
 import { ChevronDownIcon } from './components/icons';
 
