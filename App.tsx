@@ -1,8 +1,7 @@
 import React, { useState, useMemo } from 'react';
+import SpreadsheetTable from './components/SpreadsheetTable';
 import type { User, ColumnDef } from './types';
-
-
-
+import { ChevronDownIcon } from './components/icons';
 // Mock data for the spreadsheet
 const initialUsers: User[] = [
     { id: 1, name: 'John Doe', email: 'john.doe@example.com', role: 'Admin', status: 'Active', joinedDate: '2023-01-15T10:00:00Z' },
